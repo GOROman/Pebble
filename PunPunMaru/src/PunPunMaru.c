@@ -24,6 +24,11 @@ TextLayer text_layer;
 // ビットマップコンテナ
 RotBmpPairContainer bitmap_container;
 
+// 更新間隔(ms)
+#define TIMER_INTERVAL (100)
+
+static int pos_x;
+
 // 初期化時のハンドラ
 void handle_init( AppContextRef ctx ) {
   (void)ctx;
@@ -69,6 +74,9 @@ void handle_init( AppContextRef ctx ) {
 
   // レイヤーに追加
   layer_add_child( &window.layer, &bitmap_container.layer.layer );
+
+  // タイマーイベント設定
+  app_timer_send_event( ctx, TIMER_INTERVAL, 0 );
 }
 
 
@@ -80,11 +88,27 @@ void handle_deinit( AppContextRef ctx ) {
   rotbmp_pair_deinit_container( &bitmap_container );
 }
 
+// タイマー処理で呼ばれるハンドラ
+void handle_timer( AppContextRef ctx, AppTimerHandle handle, uint32_t cookie ) {
+
+  //  GPoint p;
+  pos_x += 1;  
+  pos_x %= 360;
+  //  p.x = pos_x;
+  //p.y = 0;
+
+  //  rotbmp_pair_layer_set_src_ic( &bitmap_container.layer, p );
+  rotbmp_pair_layer_set_angle( &bitmap_container.layer, TRIG_MAX_ANGLE * pos_x / 360 );
+  
+  // タイマーイベント設定
+  app_timer_send_event( ctx, TIMER_INTERVAL, cookie );
+}
 
 void pbl_main( void *params ) {
   PebbleAppHandlers handlers = {
-    .init_handler   = &handle_init,  // 初期化時に呼ばれるハンドラ
-    .deinit_handler = &handle_deinit // 終了時に呼ばれるハンドラ
+    .init_handler   = &handle_init,   // 初期化時に呼ばれるハンドラ
+    .deinit_handler = &handle_deinit, // 終了時に呼ばれるハンドラ
+    .timer_handler  = &handle_timer   // タイマー処理で呼ばれるハンドラ
   };
 
   app_event_loop(params, &handlers);
